@@ -45,7 +45,7 @@ DynamoDB (Request/Response Logs)
 ---
 
 ## 📁 Repository Structure
-
+*Need to update*
 ```
 .
 ├── training/
