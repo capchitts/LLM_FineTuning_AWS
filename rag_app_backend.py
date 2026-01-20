@@ -4,25 +4,30 @@ import os
 import json
 import requests
 from uuid import uuid4
-
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_core.documents import Document
-
 import faiss
+
+from langchain_core.documents import Document
 from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_community.vectorstores import FAISS
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
-from langchain_openai import OpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from dotenv import load_dotenv
+
+
 load_dotenv()
 
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-embedding_dim = len(embeddings.embed_query("hello"))
-
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HF_TOKEN")
 API_URL = os.getenv("API_URL")
 API_KEY = os.getenv("API_KEY")
+
+
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
+embedding_dim = len(embeddings.embed_query("hello"))
+
+
 
 index = faiss.IndexFlatL2(embedding_dim)
 vector_store = FAISS(
@@ -32,10 +37,7 @@ vector_store = FAISS(
     index_to_docstore_id={}
 )
 
-from langchain_core.documents import Document
-
 docs = [
-
     # --------- METFORMIN ----------
     Document(
         page_content=(
@@ -126,6 +128,7 @@ docs = [
 
 ]
 
+
 vector_store.add_documents(docs)
 
 retriever = vector_store.as_retriever(
@@ -133,22 +136,22 @@ retriever = vector_store.as_retriever(
     search_kwargs={"k": 1}
 )
 
+RAG_PROMPT = """
+            You are a helpful AI assistant.
+
+            Use ONLY the following context to answer the question.
+
+            Context:
+            {context}
+
+            Question:
+            {question}
+
+            Answer:
+        """
+
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
-
-RAG_PROMPT = """
-You are a helpful AI assistant.
-
-Use ONLY the following context to answer the question.
-
-Context:
-{context}
-
-Question:
-{question}
-
-Answer:
-"""
 
 def call_finetuned_llm(prompt: str) -> str:
     # Safety guard – don’t ever send an empty prompt to the model
@@ -156,6 +159,7 @@ def call_finetuned_llm(prompt: str) -> str:
         return "Error: empty prompt was generated before calling the LLM."
 
     headers = {"Content-Type": "application/json"}
+    
     if API_KEY:
         headers["x-api-key"] = API_KEY  # if you later protect the API with an API key
 
