@@ -31,7 +31,6 @@ def _parse_body(event):
         # direct invoke / test event with inputs at top level
         return event if isinstance(event, dict) else {}
 
-
 def lambda_handler(event, context):
     body = _parse_body(event)
     text = body.get("inputs", "")
@@ -59,17 +58,19 @@ def lambda_handler(event, context):
     resp = runtime.invoke_endpoint(
         EndpointName=ENDPOINT,
         ContentType="application/json",
+        Accept="application/json",
         Body=json.dumps(payload),
     )
 
     result = json.loads(resp["Body"].read().decode())
 
     log_item = {
-            "request_id": f"{int(time.time()*1000)}#{context.aws_request_id}",
-            "prompt": text,
-            "response": safe_json(result),
-            "timestamp": str(int(time.time()))
-        }
+        "id": f"{int(time.time()*1000)}#{context.aws_request_id}",
+        "prompt": text,
+        "response": safe_json(result),
+        "timestamp": str(int(time.time()))
+    }
+
     dynamo.put_item(Item=log_item)
 
     return {
