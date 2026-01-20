@@ -1,8 +1,3 @@
-Awesome — this will look *very* strong on GitHub. 🚀
-Below is a complete, professional **README.md** you can directly copy-paste.
-
----
-
 # 🚀 End-to-End LLM Fine-Tuning & Serverless Deployment on AWS
 
 This project demonstrates a complete production-grade pipeline for fine-tuning a Hugging Face LLM on AWS, deploying it as a scalable SageMaker endpoint, and exposing it via a serverless API using AWS Lambda and API Gateway. The system supports real-time text summarization with request logging and observability.
